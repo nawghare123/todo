@@ -1,6 +1,3 @@
-
-// task_screen.dart
-import 'package:email_validator/email_validator.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:todo_app/models/taskModel.dart';
@@ -9,114 +6,130 @@ import 'package:todo_app/viewmodels/taskViewModel.dart';
 class TaskScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    print("ruchika");
     return Scaffold(
       appBar: AppBar(
-        title: Text('TODO List'),
+        title: Text('TODO App'),
       ),
-      body: Column(
-        children: [
-          Expanded(
-            child: Consumer<TaskViewModel>(
-              builder: (context, model, child) {
-                var tasks = model.tasks;
-                return ListView.builder(
-                  itemCount: tasks.length,
-                  itemBuilder: (context, index) {
-                    var task = tasks[index];
-                    return ListTile(
-                      title: Text(task.title),
-                      subtitle: Text(task.description),
-                    );
-                  },
-                );
-              },
-            ),
-          ),
-          TaskForm(),
-        ],
+      body: Consumer<TaskViewModel>(
+        builder: (context, model, child) {
+          final tasks = model.tasks;
+          return ListView.builder(
+            itemCount: tasks.length,
+            itemBuilder: (context, index) {
+              final task = tasks[index];
+              return ListTile(
+                title: Text(task.title),
+                subtitle: Text(task.description),
+                trailing: IconButton(
+                  icon: Icon(Icons.delete),
+                  onPressed: () => model.deleteTask(task.id),
+                ),
+                onTap: () => _showEditTaskDialog(context, task),
+              );
+            },
+          );
+        },
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () => _showAddTaskDialog(context),
+        child: Icon(Icons.add),
       ),
     );
   }
-}
 
+  void _showAddTaskDialog(BuildContext context) {
+    final TextEditingController titleController = TextEditingController();
+    final TextEditingController descriptionController = TextEditingController();
 
-class TaskForm extends StatefulWidget {
-  @override
-  _TaskFormState createState() => _TaskFormState();
-}
-
-class _TaskFormState extends State<TaskForm> {
-  final _formKey = GlobalKey<FormState>();
-  final _titleController = TextEditingController();
-  final _descriptionController = TextEditingController();
-  final _assignedToController = TextEditingController();
-
-  @override
-  Widget build(BuildContext context) {
-    print("ruchika123");
-    return Padding(
-      padding: EdgeInsets.all(16.0),
-      child: Form(
-        key: _formKey,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            TextFormField(
-              controller: _titleController,
-              decoration: InputDecoration(labelText: 'Title'),
-              validator: (value) {
-                if (value == null || value.isEmpty) {
-                  return 'Please enter title';
-                }
-                return null;
-              },
-            ),
-            TextFormField(
-              controller: _descriptionController,
-              decoration: InputDecoration(labelText: 'Description'),
-              validator: (value) {
-                if (value == null || value.isEmpty) {
-                  return 'Please enter description';
-                }
-                return null;
-              },
-            ),
-            TextFormField(
-              controller: _assignedToController,
-              decoration: InputDecoration(labelText: 'Assigned To (Email)'),
-              validator: (value) {
-                if (value == null || value.isEmpty) {
-                  return 'Please enter email';
-                }
-                if (!EmailValidator.validate(value)) {
-                  return 'Please enter valid email';
-                }
-                return null;
-              },
-            ),
-            ElevatedButton(
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text('Add New Task'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: titleController,
+                decoration: InputDecoration(labelText: 'Title'),
+              ),
+              TextField(
+                controller: descriptionController,
+                decoration: InputDecoration(labelText: 'Description'),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
               onPressed: () {
-                if (_formKey.currentState!.validate()) {
-                  var task = Task(
-                    id: '',
-                    title: _titleController.text,
-                    description: _descriptionController.text,
-                    createdBy: '',
-                    assignedTo: _assignedToController.text,
-                  );
-                  Provider.of<TaskViewModel>(context, listen: false)
-                      .addTask(task);
-                  _titleController.clear();
-                  _descriptionController.clear();
-                  _assignedToController.clear();
+                Navigator.of(context).pop();
+              },
+              child: Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () {
+                final title = titleController.text;
+                final description = descriptionController.text;
+                if (title.isNotEmpty && description.isNotEmpty) {
+                  Provider.of<TaskViewModel>(context, listen: false).addTask(title, description);
+                  Navigator.of(context).pop();
+                } else {
+                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Please enter title and description')));
                 }
               },
-              child: Text('Add Task'),
+              child: Text('Add'),
             ),
           ],
-        ),
-      ),
+        );
+      },
+    );
+  }
+
+  void _showEditTaskDialog(BuildContext context, Task task) {
+    final TextEditingController titleController = TextEditingController(text: task.title);
+    final TextEditingController descriptionController = TextEditingController(text: task.description);
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text('Edit Task'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: titleController,
+                decoration: InputDecoration(labelText: 'Title'),
+              ),
+              TextField(
+                controller: descriptionController,
+                decoration: InputDecoration(labelText: 'Description'),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () {
+                final title = titleController.text;
+                final description = descriptionController.text;
+                if (title.isNotEmpty && description.isNotEmpty) {
+                  Provider.of<TaskViewModel>(context, listen: false).updateTask(task.id, title, description);
+                  Navigator.of(context).pop();
+                } else {
+                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Please enter title and description')));
+                }
+              },
+              child: Text('Save'),
+            ),
+          ],
+        );
+      },
     );
   }
 }

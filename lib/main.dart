@@ -1,12 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_core/firebase_core.dart';
 import 'package:provider/provider.dart';
 import 'package:todo_app/viewmodels/taskViewModel.dart';
 import 'package:todo_app/views/taskScreen.dart';
 
-void main() async {
-  WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp();
+void main() {
   runApp(
     ChangeNotifierProvider(
       create: (context) => TaskViewModel(),
@@ -16,6 +13,7 @@ void main() async {
           primarySwatch: Colors.blue,
         ),
         home: TaskScreen(),
+        debugShowCheckedModeBanner: false,
       ),
     ),
   );
